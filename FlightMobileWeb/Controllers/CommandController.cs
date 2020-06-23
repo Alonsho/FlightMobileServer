@@ -23,11 +23,19 @@ namespace FlightMobileWeb.Controllers
         [HttpPost]
         public async Task<StatusCodeResult> Post(Command command)
         {
-            var response = await comm_thread.Execute(command);
-            if (response == Result.Ok)
+            try
             {
-                return StatusCode(200);
-            } else
+                var response = await comm_thread.Execute(command);
+                if (response == Result.Ok)
+                {
+                    return StatusCode(200);
+                }
+                else
+                {
+                    return StatusCode(500);
+                }
+                // TODO change response code according to error (null pointer is connection fail and io is timeout)
+            } catch
             {
                 return StatusCode(500);
             }

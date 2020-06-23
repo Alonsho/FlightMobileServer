@@ -46,22 +46,38 @@ namespace FlightMobileWeb
 
         public void ProcessCommands()
         {
-            _client.Connect("127.0.0.1", 5403);
-            NetworkStream stream = _client.GetStream();
-            byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
-            stream.Write(start, 0, start.Length);
+            NetworkStream stream = null;
+            try
+            {
+                _client.Connect("127.0.0.1", 5403);
+                _client.ReceiveTimeout = 15000;
+                stream = _client.GetStream();
+                byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
+                stream.Write(start, 0, start.Length);
+            } catch
+            // catch is left empty to allow program to continue so that the exception will eventually be thrown to controller
+            {
+
+            }
             foreach (AsyncCommand command in _queue.GetConsumingEnumerable())
             {
-                Result res;
-                sendData(stream, command.Command);
-                if (checkRecieved(stream, command.Command) == true)
+                try
                 {
-                    res = Result.Ok;
-                } else
+                    Result res;
+                    sendData(stream, command.Command);
+                    if (checkRecieved(stream, command.Command) == true)
+                    {
+                        res = Result.Ok;
+                    }
+                    else
+                    {
+                        res = Result.NotOk;
+                    }
+                    command.Completion.SetResult(res);
+                } catch (Exception e)
                 {
-                    res = Result.NotOk;
+                    command.Completion.SetException(e);
                 }
-                command.Completion.SetResult(res);
             }
         }
 
@@ -72,14 +88,21 @@ namespace FlightMobileWeb
             var rudderVal = command.Rudder;
             var throttleVal = command.Throttle;
             var elevatorVal = command.Elevator;
-            byte[] sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + AILERON_PATH + " " + aileronVal.ToString() + " \r\n");
+            string toSend = "set " + AILERON_PATH + " " + aileronVal.ToString() + " \r\n";
+            toSend += "set " + RUDDER_PATH + " " + rudderVal.ToString() + " \r\n";
+            toSend += "set " + THROTTLE_PATH + " " + throttleVal.ToString() + " \r\n";
+            toSend += "set " + ELEVATOR_PATH + " " + elevatorVal.ToString() + " \r\n";
+            byte[] sendBuffer = System.Text.Encoding.ASCII.GetBytes(toSend);
+            stream.Write(sendBuffer, 0, sendBuffer.Length);
+            // not sure if real simultor can process multiple 'set' commands in one message. uncomment and delete above if not
+            /*byte[] sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + AILERON_PATH + " " + aileronVal.ToString() + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + RUDDER_PATH + " " + rudderVal.ToString() + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + THROTTLE_PATH + " " + throttleVal.ToString() + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + ELEVATOR_PATH + " " + elevatorVal.ToString() + " \r\n");
-            stream.Write(sendBuffer, 0, sendBuffer.Length);
+            stream.Write(sendBuffer, 0, sendBuffer.Length);*/
         }
 
 
