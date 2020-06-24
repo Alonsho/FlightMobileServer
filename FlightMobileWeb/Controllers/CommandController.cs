@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FlightMobileWeb.Controllers
 {
-    [Route("api/[controller]")]
+    // TODO add connect command and get screenshot command
+    
     [ApiController]
     public class CommandController : ControllerBase
     {
@@ -19,8 +20,25 @@ namespace FlightMobileWeb.Controllers
             comm_thread = client;
         }
 
+
+        [HttpPost]
+        [Route("api/connect")]
+        public StatusCodeResult Post()
+        {
+            var connected = comm_thread.Connect();
+            if (connected)
+            {
+                return StatusCode(200);
+            }
+            else
+            {
+                return StatusCode(500);
+            }
+        }
+
         // POST: api/Command
         [HttpPost]
+        [Route("api/[controller]")]
         public async Task<StatusCodeResult> Post(Command command)
         {
             try

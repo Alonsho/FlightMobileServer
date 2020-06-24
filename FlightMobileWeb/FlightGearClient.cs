@@ -14,6 +14,8 @@ namespace FlightMobileWeb
     {
         private readonly BlockingCollection<AsyncCommand> _queue;
         private readonly TcpClient _client;
+        private NetworkStream stream;
+        private bool isConnected = false;
 
         static private string AILERON_PATH = "/controls/flight/aileron";
         static private string THROTTLE_PATH = "/controls/engines/current-engine/throttle";
@@ -25,6 +27,32 @@ namespace FlightMobileWeb
             _queue = new BlockingCollection<AsyncCommand>();
             _client = new TcpClient();
             Start();
+        }
+
+
+
+        public bool Connect()
+        {
+            if (isConnected)
+            {
+                return true;
+            }
+            try
+            {
+                // TODO set ip and port according to appsettings
+                _client.Connect("127.0.0.1", 5403);
+                // TODO check if need to change timeout value
+                _client.ReceiveTimeout = 15000;
+                stream = _client.GetStream();
+                byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
+                stream.Write(start, 0, start.Length);
+                isConnected = true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
 
@@ -46,10 +74,12 @@ namespace FlightMobileWeb
 
         public void ProcessCommands()
         {
-            NetworkStream stream = null;
+            /*NetworkStream stream = null;
             try
             {
+                // TODO set ip and port according to appsettings
                 _client.Connect("127.0.0.1", 5403);
+                // TODO check if need to change timeout value
                 _client.ReceiveTimeout = 15000;
                 stream = _client.GetStream();
                 byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
@@ -58,7 +88,7 @@ namespace FlightMobileWeb
             // catch is left empty to allow program to continue so that the exception will eventually be thrown to controller
             {
 
-            }
+            }*/
             foreach (AsyncCommand command in _queue.GetConsumingEnumerable())
             {
                 try
