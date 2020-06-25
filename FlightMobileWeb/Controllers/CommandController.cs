@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace FlightMobileWeb.Controllers
             comm_thread = client;
         }
 
-
+        // POST: api/connect
         [HttpPost]
         [Route("api/connect")]
         public StatusCodeResult Post()
@@ -41,6 +42,11 @@ namespace FlightMobileWeb.Controllers
         [Route("api/[controller]")]
         public async Task<StatusCodeResult> Post(Command command)
         {
+            // TODO remove test
+            /*if (command.Rudder == 0.8)
+            {
+                return StatusCode(500);
+            }*/
             try
             {
                 var response = await comm_thread.Execute(command);
@@ -57,6 +63,25 @@ namespace FlightMobileWeb.Controllers
             {
                 return StatusCode(500);
             }
+        }
+
+
+        [HttpGet]
+        [Route("api/screenshot")]
+        public async Task<ActionResult> Get()
+        {
+            string to = "http://127.0.0.1:5000/screenshot";
+            byte[] response = await new HttpClient().GetByteArrayAsync(to);
+            if (response != null) //success
+                try
+                {
+                    var file = File(response, "image/jpeg"); //200 Ok  + the image
+                    return file;
+                } catch
+                {
+                    return StatusCode(500);
+                }
+            return StatusCode(500);
         }
     }
 }
