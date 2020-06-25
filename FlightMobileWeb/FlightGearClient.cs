@@ -16,6 +16,7 @@ namespace FlightMobileWeb
         private readonly TcpClient _client;
         private NetworkStream stream;
         private bool isConnected = false;
+        //Values for http requests.
 
         static private string AILERON_PATH = "/controls/flight/aileron";
         static private string THROTTLE_PATH = "/controls/engines/current-engine/throttle";
@@ -39,6 +40,7 @@ namespace FlightMobileWeb
             }
             try
             {
+                //Connection phase.
                 // TODO set ip and port according to appsettings
                 _client.Connect("127.0.0.1", 5403);
                 // TODO check if need to change timeout value
@@ -65,13 +67,14 @@ namespace FlightMobileWeb
             return asyncCommand.Task;
         }
 
-
+        //Strart processing commands.
         public void Start()
         {
             Task.Factory.StartNew(ProcessCommands);
         }
 
 
+        //This function iterates given commands, sends each one and checks if received.
         public void ProcessCommands()
         {
             /*NetworkStream stream = null;
@@ -89,12 +92,14 @@ namespace FlightMobileWeb
             {
 
             }*/
+            //Iterate commands from queue, and send them.
             foreach (AsyncCommand command in _queue.GetConsumingEnumerable())
             {
                 try
                 {
                     Result res;
                     sendData(stream, command.Command);
+                    //Check if message received.
                     if (checkRecieved(stream, command.Command) == true)
                     {
                         res = Result.Ok;
@@ -111,18 +116,20 @@ namespace FlightMobileWeb
             }
         }
 
-
+        //Sending data with given command.
         private void sendData(NetworkStream stream, Command command)
         {
             var aileronVal = command.Aileron;
             var rudderVal = command.Rudder;
             var throttleVal = command.Throttle;
             var elevatorVal = command.Elevator;
+            //Creating strings to send.
             string toSend = "set " + AILERON_PATH + " " + aileronVal.ToString() + " \r\n";
             toSend += "set " + RUDDER_PATH + " " + rudderVal.ToString() + " \r\n";
             toSend += "set " + THROTTLE_PATH + " " + throttleVal.ToString() + " \r\n";
             toSend += "set " + ELEVATOR_PATH + " " + elevatorVal.ToString() + " \r\n";
             byte[] sendBuffer = System.Text.Encoding.ASCII.GetBytes(toSend);
+            //Sending phase.
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             // not sure if real simultor can process multiple 'set' commands in one message. uncomment and delete above if not
             /*byte[] sendBuffer = System.Text.Encoding.ASCII.GetBytes("set " + AILERON_PATH + " " + aileronVal.ToString() + " \r\n");
@@ -136,12 +143,14 @@ namespace FlightMobileWeb
         }
 
 
+    //Check if requests were received
     private bool checkRecieved(NetworkStream stream, Command command)
         {
             byte[] sendBuffer = new byte[1024];
             byte[] recvBuffer = new byte[1024];
             int bytes;
             double recvValue;
+            //The getter of aileron.
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("get " + AILERON_PATH + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             bytes = stream.Read(recvBuffer, 0, recvBuffer.Length);
@@ -151,7 +160,7 @@ namespace FlightMobileWeb
             {
                 return false;
             }
-
+            //The getter of aileron.
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("get " + RUDDER_PATH + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             bytes = stream.Read(recvBuffer, 0, recvBuffer.Length);
@@ -160,7 +169,7 @@ namespace FlightMobileWeb
             {
                 return false;
             }
-
+            //The getter of throttle.
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("get " + THROTTLE_PATH + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             bytes = stream.Read(recvBuffer, 0, recvBuffer.Length);
@@ -169,7 +178,7 @@ namespace FlightMobileWeb
             {
                 return false;
             }
-
+            //The getter of elevator.
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("get " + ELEVATOR_PATH + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             bytes = stream.Read(recvBuffer, 0, recvBuffer.Length);
