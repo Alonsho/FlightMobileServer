@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,14 +17,16 @@ namespace FlightMobileWeb
         private readonly TcpClient _client;
         private NetworkStream stream;
         private bool isConnected = false;
+        private readonly IConfiguration config;
 
         static private string AILERON_PATH = "/controls/flight/aileron";
         static private string THROTTLE_PATH = "/controls/engines/current-engine/throttle";
         static private string ELEVATOR_PATH = "/controls/flight/elevator";
         static private string RUDDER_PATH = "/controls/flight/rudder";
 
-        public FlightGearClient()
+        public FlightGearClient(IConfiguration configyration)
         {
+            config = configyration;
             _queue = new BlockingCollection<AsyncCommand>();
             _client = new TcpClient();
             Start();
@@ -39,9 +42,15 @@ namespace FlightMobileWeb
             }
             try
             {
-                // TODO set ip and port according to appsettings
-                _client.Connect("127.0.0.1", 5403);
-                // TODO check if need to change timeout value
+                string simulatorIP = config.GetSection("ServerSettings")
+                    .GetSection("serverIP").Value;
+                if (simulatorIP.StartsWith("http://"))
+                {
+                    simulatorIP = simulatorIP.Remove(0, "http://".Length);
+                }
+                var TCPPORT_s = config.GetSection("ServerSettings").GetSection("TCPPORT").Value;
+                var TCPPORT = Int32.Parse(TCPPORT_s);
+                _client.Connect(simulatorIP, TCPPORT);
                 _client.ReceiveTimeout = 15000;
                 stream = _client.GetStream();
                 byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
@@ -74,21 +83,6 @@ namespace FlightMobileWeb
 
         public void ProcessCommands()
         {
-            /*NetworkStream stream = null;
-            try
-            {
-                // TODO set ip and port according to appsettings
-                _client.Connect("127.0.0.1", 5403);
-                // TODO check if need to change timeout value
-                _client.ReceiveTimeout = 15000;
-                stream = _client.GetStream();
-                byte[] start = System.Text.Encoding.ASCII.GetBytes("data\n");
-                stream.Write(start, 0, start.Length);
-            } catch
-            // catch is left empty to allow program to continue so that the exception will eventually be thrown to controller
-            {
-
-            }*/
             foreach (AsyncCommand command in _queue.GetConsumingEnumerable())
             {
                 try

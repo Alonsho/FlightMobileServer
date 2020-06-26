@@ -5,20 +5,23 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace FlightMobileWeb.Controllers
 {
-    // TODO add connect command and get screenshot command
     
     [ApiController]
     public class CommandController : ControllerBase
     {
+        private readonly IConfiguration config;
         private FlightGearClient comm_thread;
+        
 
 
-        public CommandController(FlightGearClient client)
+        public CommandController(FlightGearClient client, IConfiguration configuration)
         {
             comm_thread = client;
+            config = configuration;
         }
 
         // POST: api/connect
@@ -37,16 +40,12 @@ namespace FlightMobileWeb.Controllers
             }
         }
 
+        //TODO return different code for bad syntax (400 bad request)
         // POST: api/Command
         [HttpPost]
         [Route("api/[controller]")]
         public async Task<StatusCodeResult> Post(Command command)
         {
-            // TODO remove test
-            /*if (command.Rudder == 0.8)
-            {
-                return StatusCode(500);
-            }*/
             try
             {
                 var response = await comm_thread.Execute(command);
@@ -58,7 +57,6 @@ namespace FlightMobileWeb.Controllers
                 {
                     return StatusCode(500);
                 }
-                // TODO change response code according to error (null pointer is connection fail and io is timeout)
             } catch
             {
                 return StatusCode(500);
@@ -70,7 +68,15 @@ namespace FlightMobileWeb.Controllers
         [Route("api/screenshot")]
         public async Task<ActionResult> Get()
         {
-            string to = "http://127.0.0.1:5000/screenshot";
+            string simulatorIP = config.GetSection("ServerSettings").GetSection("serverIP").Value;
+            var TCPPORT_s = config.GetSection("ServerSettings").GetSection("HTTPPORT").Value;
+            var TCPPORT = Int32.Parse(TCPPORT_s);
+            string to = simulatorIP;
+            if (!simulatorIP.StartsWith("http://"))
+            {
+                to = "http://" + simulatorIP;
+            }
+            to += ":" + TCPPORT_s + "/screenshot";
             byte[] response = await new HttpClient().GetByteArrayAsync(to);
             if (response != null) //success
                 try
