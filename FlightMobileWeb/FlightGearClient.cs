@@ -44,7 +44,7 @@ namespace FlightMobileWeb
             try
             {
                 string simulatorIP = config.GetSection("ServerSettings")
-                    .GetSection("serverIP").Value;
+                                            .GetSection("serverIP").Value;
                 if (simulatorIP.StartsWith("http://"))
                 {
                     simulatorIP = simulatorIP.Remove(0, "http://".Length);

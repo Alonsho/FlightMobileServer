@@ -40,7 +40,6 @@ namespace FlightMobileWeb.Controllers
             }
         }
 
-        //TODO return different code for bad syntax (400 bad request)
         // POST: api/Command
         [HttpPost]
         [Route("api/[controller]")]
