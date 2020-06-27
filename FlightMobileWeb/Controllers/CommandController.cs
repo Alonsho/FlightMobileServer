@@ -14,7 +14,7 @@ namespace FlightMobileWeb.Controllers
     public class CommandController : ControllerBase
     {
         private readonly IConfiguration config;
-        private FlightGearClient comm_thread;
+        private readonly FlightGearClient comm_thread;
         
 
 
@@ -69,7 +69,6 @@ namespace FlightMobileWeb.Controllers
         {
             string simulatorIP = config.GetSection("ServerSettings").GetSection("serverIP").Value;
             var TCPPORT_s = config.GetSection("ServerSettings").GetSection("HTTPPORT").Value;
-            var TCPPORT = Int32.Parse(TCPPORT_s);
             string to = simulatorIP;
             if (!simulatorIP.StartsWith("http://"))
             {

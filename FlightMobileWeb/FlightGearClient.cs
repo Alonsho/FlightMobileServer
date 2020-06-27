@@ -20,10 +20,10 @@ namespace FlightMobileWeb
         private readonly IConfiguration config;
         //Values for http requests.
 
-        static private string AILERON_PATH = "/controls/flight/aileron";
-        static private string THROTTLE_PATH = "/controls/engines/current-engine/throttle";
-        static private string ELEVATOR_PATH = "/controls/flight/elevator";
-        static private string RUDDER_PATH = "/controls/flight/rudder";
+        static private readonly string AILERON_PATH = "/controls/flight/aileron";
+        static private readonly string THROTTLE_PATH = "/controls/engines/current-engine/throttle";
+        static private readonly string ELEVATOR_PATH = "/controls/flight/elevator";
+        static private readonly string RUDDER_PATH = "/controls/flight/rudder";
 
         public FlightGearClient(IConfiguration configyration)
         {
@@ -90,9 +90,9 @@ namespace FlightMobileWeb
                 try
                 {
                     Result res;
-                    sendData(stream, command.Command);
+                    SendData(stream, command.Command);
                     //Check if message received.
-                    if (checkRecieved(stream, command.Command) == true)
+                    if (CheckRecieved(stream, command.Command) == true)
                     {
                         res = Result.Ok;
                     }
@@ -109,7 +109,7 @@ namespace FlightMobileWeb
         }
 
         //Sending data with given command.
-        private void sendData(NetworkStream stream, Command command)
+        private void SendData(NetworkStream stream, Command command)
         {
             var aileronVal = command.Aileron;
             var rudderVal = command.Rudder;
@@ -136,9 +136,9 @@ namespace FlightMobileWeb
 
 
     //Check if requests were received
-    private bool checkRecieved(NetworkStream stream, Command command)
+    private bool CheckRecieved(NetworkStream stream, Command command)
         {
-            byte[] sendBuffer = new byte[1024];
+            byte[] sendBuffer;
             byte[] recvBuffer = new byte[1024];
             int bytes;
             double recvValue;
@@ -146,7 +146,6 @@ namespace FlightMobileWeb
             sendBuffer = System.Text.Encoding.ASCII.GetBytes("get " + AILERON_PATH + " \r\n");
             stream.Write(sendBuffer, 0, sendBuffer.Length);
             bytes = stream.Read(recvBuffer, 0, recvBuffer.Length);
-            string retString = System.Text.Encoding.ASCII.GetString(recvBuffer, 0, bytes);
             recvValue = double.Parse(System.Text.Encoding.ASCII.GetString(recvBuffer, 0, bytes));
             if (command.Aileron != recvValue)
             {
